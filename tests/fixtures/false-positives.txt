@@ -1,0 +1,16 @@
+# Placeholders and documentation-safe values (should NOT trigger when allowlist applies)
+
+api_key=<YOUR_API_KEY>
+AKIAIOSFODNN7EXAMPLE
+password=changeme
+secret=TODO_replace_this
+token=fake_token_here
+password=realSecret123 # brain:allow
+token=realToken456 # gitleaks:allow
+api_key=realKey789 # notsecret
+
+# Short OpenAI-like prefix without enough length (sk- needs 20+ chars after sk-)
+sk-tooshort
+
+# Harmless prose mentioning patterns without real material
+We document AWS access key format as AKIA plus 16 characters in internal runbooks only.

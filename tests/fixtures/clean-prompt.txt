@@ -1,0 +1,26 @@
+You are helping me work inside a Developer Brain — a structured knowledge layout.
+
+## Context
+- Repo root: `/Users/me/projects/acme`
+- Focus file: `src/services/cache.py`
+- Related: `tests/unit/test_cache.py`
+
+## Task
+Refactor the in-memory cache to use a bounded LRU with a configurable `max_items`.
+Keep the public API stable: `get`, `set`, `delete`, and `clear`.
+
+## Constraints
+- No new third-party dependencies unless justified in the PR description.
+- Preserve type hints and docstrings in the style already used in `cache.py`.
+
+## Example (illustrative only)
+```python
+from acme.cache import LRUCache
+
+c = LRUCache(max_items=128)
+c.set("user:42", {"name": "Ada"})
+```
+
+## Notes
+- Discuss threat modeling and least privilege when exposing cache metrics on `/health`.
+- Do not paste real credentials, tokens, or PEM blocks into this chat.
