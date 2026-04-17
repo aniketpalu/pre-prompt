@@ -12,7 +12,6 @@ from typing import Any
 
 SRC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir, "src")
 SCAN_SECRETS = os.path.join(SRC_DIR, "scan-secrets.py")
-SCAN_FILE_READ = os.path.join(SRC_DIR, "scan-file-read.py")
 
 
 def run_scan_secrets(payload: dict[str, Any]) -> dict[str, Any]:
@@ -27,21 +26,6 @@ def run_scan_secrets(payload: dict[str, Any]) -> dict[str, Any]:
     if result.returncode != 0:
         raise AssertionError(
             f"scan-secrets exited {result.returncode}: stderr={err!r} stdout={result.stdout!r}"
-        )
-    return json.loads(result.stdout)
-
-
-def run_scan_file_read(payload: dict[str, Any]) -> dict[str, Any]:
-    result = subprocess.run(
-        ["python3", SCAN_FILE_READ],
-        input=json.dumps(payload),
-        capture_output=True,
-        text=True,
-        timeout=10,
-    )
-    if result.returncode != 0:
-        raise AssertionError(
-            f"scan-file-read exited {result.returncode}: stderr={result.stderr!r} stdout={result.stdout!r}"
         )
     return json.loads(result.stdout)
 
@@ -345,56 +329,7 @@ class TestAttachments(unittest.TestCase):
             os.unlink(path)
 
 
-# --- F. File read hook ---
-
-
-class TestScanFileRead(unittest.TestCase):
-    def test_aws_key_in_content_denies(self) -> None:
-        r = run_scan_file_read(
-            {
-                "file_path": "/tmp/app.cfg",
-                "content": "key=AKIAZBCDEFGHIJ123456\n",  # gitleaks:allow
-            }
-        )
-        self.assertEqual(r["permission"], "deny")
-
-    def test_clean_content_allows(self) -> None:
-        r = run_scan_file_read(
-            {
-                "file_path": "/src/utils.py",
-                "content": "def add(a, b):\n    return a + b\n",
-            }
-        )
-        self.assertEqual(r.get("permission"), "allow")
-
-    def test_png_extension_skipped_allows(self) -> None:
-        r = run_scan_file_read(
-            {
-                "file_path": "/assets/logo.png",
-                "content": "AKIAZBCDEFGHIJ123456",  # gitleaks:allow
-            }
-        )
-        self.assertEqual(r.get("permission"), "allow")
-
-    def test_node_modules_path_skipped_allows(self) -> None:
-        r = run_scan_file_read(
-            {
-                "file_path": "/proj/node_modules/foo/index.js",
-                "content": "AKIAZBCDEFGHIJ123456",  # gitleaks:allow
-            }
-        )
-        self.assertEqual(r.get("permission"), "allow")
-
-    def test_empty_content_allows(self) -> None:
-        r = run_scan_file_read({"file_path": "/x.txt", "content": ""})
-        self.assertEqual(r.get("permission"), "allow")
-
-    def test_missing_content_allows(self) -> None:
-        r = run_scan_file_read({"file_path": "/x.txt"})
-        self.assertEqual(r.get("permission"), "allow")
-
-
-# --- G. Output format ---
+# --- F. Output format ---
 
 
 class TestOutputFormat(unittest.TestCase):
@@ -416,17 +351,6 @@ class TestOutputFormat(unittest.TestCase):
         self.assertFalse(r["continue"])
         msg = r["user_message"]
         self.assertNotIn(secret, msg)
-
-    def test_deny_has_permission_and_user_message(self) -> None:
-        r = run_scan_file_read(
-            {
-                "file_path": "/secrets.env",
-                "content": "AWS=AKIAZBCDEFGHIJ123456",  # gitleaks:allow
-            }
-        )
-        self.assertEqual(r["permission"], "deny")
-        self.assertIn("user_message", r)
-        self.assertIn("AWS Access Key", r["user_message"])
 
 
 if __name__ == "__main__":

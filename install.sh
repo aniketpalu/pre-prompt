@@ -40,17 +40,14 @@ echo "Installing pre-prompt scanner ($MODE)..."
 mkdir -p "$DEST_DIR"
 cp "$SRC_DIR/patterns.py" "$DEST_DIR/"
 cp "$SRC_DIR/scan-secrets.py" "$DEST_DIR/"
-cp "$SRC_DIR/scan-file-read.py" "$DEST_DIR/"
-chmod +x "$DEST_DIR/scan-secrets.py" "$DEST_DIR/scan-file-read.py"
+chmod +x "$DEST_DIR/scan-secrets.py"
 
 if [ -f "$HOOKS_JSON" ]; then
     echo ""
     echo "WARNING: $HOOKS_JSON already exists."
-    echo "Please merge the following hooks into your existing config:"
+    echo "Please merge the following hook into your existing config:"
     echo ""
     echo "  \"beforeSubmitPrompt\": [{\"command\": \"python3 $CMD_PREFIX/scan-secrets.py\", \"failClosed\": true}]"
-    echo "  \"beforeReadFile\":    [{\"command\": \"python3 $CMD_PREFIX/scan-file-read.py\", \"failClosed\": true}]"
-    echo "  \"beforeTabFileRead\": [{\"command\": \"python3 $CMD_PREFIX/scan-file-read.py\", \"failClosed\": true}]"
     echo ""
 else
     cat > "$HOOKS_JSON" << HOOKEOF
@@ -60,18 +57,6 @@ else
     "beforeSubmitPrompt": [
       {
         "command": "python3 $CMD_PREFIX/scan-secrets.py",
-        "failClosed": true
-      }
-    ],
-    "beforeReadFile": [
-      {
-        "command": "python3 $CMD_PREFIX/scan-file-read.py",
-        "failClosed": true
-      }
-    ],
-    "beforeTabFileRead": [
-      {
-        "command": "python3 $CMD_PREFIX/scan-file-read.py",
         "failClosed": true
       }
     ]

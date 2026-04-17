@@ -1,12 +1,12 @@
 # pre-prompt
 
-A credential scanner that catches secrets **before they reach the AI model**. Built as native [Cursor hooks](https://cursor.com/docs/agent/hooks) — no extension required.
+A credential scanner that catches secrets **before they reach the AI model**. Built as a native [Cursor hook](https://cursor.com/docs/agent/hooks) — no extension required.
 
 > **Cursor only for now.** VS Code extension is planned.
 
 ## How It Works
 
-Every time you submit a prompt or the agent reads a file, pre-prompt checks for credentials and **blocks the action** if any are found. The secret never leaves your machine.
+Every time you submit a prompt, pre-prompt checks for credentials and **blocks the action** if any are found. The secret never leaves your machine.
 
 ```
 You hit Send
@@ -16,14 +16,12 @@ You hit Send
   -> Secret found? Blocked with a clear warning.
 ```
 
-### What Gets Caught
+### What Gets Scanned
 
-| Vector | Hook |
-|--------|------|
-| You type or paste a credential into chat | `beforeSubmitPrompt` |
-| You attach a file containing secrets | `beforeSubmitPrompt` |
-| The agent reads a file with credentials into context | `beforeReadFile` |
-| Tab autocomplete reads a file with credentials | `beforeTabFileRead` |
+| Vector | How |
+|--------|-----|
+| You type or paste a credential into chat | Prompt text is scanned |
+| You attach a file containing secrets | Attached file contents are scanned |
 
 ### 15 Credential Patterns
 
@@ -80,11 +78,11 @@ This copies the scanner to `.cursor/hooks/` in your project and creates `.cursor
 
 ### Option C: Manual
 
-Copy the three files from `src/` into your hooks directory:
+Copy the two files from `src/` into your hooks directory:
 
 ```bash
 mkdir -p ~/.cursor/hooks
-cp src/patterns.py src/scan-secrets.py src/scan-file-read.py ~/.cursor/hooks/
+cp src/patterns.py src/scan-secrets.py ~/.cursor/hooks/
 ```
 
 Then create `~/.cursor/hooks.json` (or `.cursor/hooks.json` in your project):
@@ -98,18 +96,6 @@ Then create `~/.cursor/hooks.json` (or `.cursor/hooks.json` in your project):
         "command": "python3 ./hooks/scan-secrets.py",
         "failClosed": true
       }
-    ],
-    "beforeReadFile": [
-      {
-        "command": "python3 ./hooks/scan-file-read.py",
-        "failClosed": true
-      }
-    ],
-    "beforeTabFileRead": [
-      {
-        "command": "python3 ./hooks/scan-file-read.py",
-        "failClosed": true
-      }
     ]
   }
 }
@@ -119,33 +105,20 @@ For project-level hooks, change paths from `./hooks/` to `.cursor/hooks/`.
 
 ### Verify
 
-Check **Cursor Settings > Hooks** — all 3 hooks should appear. If not, run `Developer: Reload Window`.
+Check **Cursor Settings > Hooks** — the hook should appear. If not, run `Developer: Reload Window`.
 
 ## What You See
 
 When a secret is detected, your prompt is blocked:
 
 ```
-⚠ SECRET DETECTED — Prompt blocked
+SECRET DETECTED — Prompt blocked
 
 Found 1 potential credential:
-  • AWS Access Key (AKIA...MPLE) in prompt text
+  - AWS Access Key (AKIA...MPLE) in prompt text
 
 Remove the credentials and try again.
 To suppress a false positive, add 'notsecret' next to the value.
-```
-
-When a file read is blocked:
-
-```
-⚠ SECRET DETECTED — File read blocked
-
-File: /path/to/config.env
-Found 2 potential credentials:
-  • AWS Access Key (AKIA...3456)
-  • Secret assignment (pass...rd12)
-
-This file contains credentials and was not sent to the model.
 ```
 
 ## Suppressing False Positives
@@ -178,27 +151,25 @@ Edit `patterns.py` and add entries to the `PATTERNS` list:
 },
 ```
 
-## Skipping File Types
-
-`scan-file-read.py` automatically skips:
-- Binary files: `.png`, `.jpg`, `.zip`, `.exe`, `.pyc`, etc.
-- Vendor directories: `node_modules`, `vendor`, `__pycache__`, `.venv`
-
-Edit `SKIP_EXTENSIONS` and `SKIP_PATH_SEGMENTS` in `scan-file-read.py` to customize.
-
 ## Configuration
 
 ### `failClosed`
 
-All hooks default to `failClosed: true`. If the scanner crashes or times out, the action is **blocked** rather than allowed through. Set to `false` if you prefer fail-open.
+The hook defaults to `failClosed: true`. If the scanner crashes or times out, the action is **blocked** rather than allowed through. Set to `false` if you prefer fail-open.
+
+## Known Limitations
+
+- **Prompt-only** — Cursor's `beforeReadFile` and `preToolUse` hooks do not reliably fire for agent file reads (known Cursor bug as of April 2026). This scanner only covers prompt text and manually attached files. Use `.cursorignore` to block agent access to sensitive files.
+- **Block only** — hooks cannot redact or modify prompts, only allow or block
+- **Cursor only** — VS Code support planned as a separate extension
+- **No entropy checks** — relies on pattern matching; may miss high-entropy random strings
+- **Hooks are a Cursor preview feature** — the API may change
 
 ## Running Tests
 
 ```bash
 python3 -m pytest tests/test_scan_secrets.py -v
 ```
-
-49 tests covering all 15 patterns, allowlist behavior, edge cases, attachments, and output format.
 
 ## Project Structure
 
@@ -210,8 +181,7 @@ pre-prompt/
 ├── hooks.json.example      # Example Cursor hooks config
 ├── src/
 │   ├── patterns.py         # 15 regex patterns + allowlist
-│   ├── scan-secrets.py     # beforeSubmitPrompt hook
-│   └── scan-file-read.py   # beforeReadFile + beforeTabFileRead hook
+│   └── scan-secrets.py     # beforeSubmitPrompt hook
 └── tests/
     ├── test_scan_secrets.py
     └── fixtures/
@@ -220,13 +190,6 @@ pre-prompt/
         ├── false-positives.txt
         └── secret-test-file.env
 ```
-
-## Limitations
-
-- **Block only** — hooks cannot redact or modify prompts, only allow or block
-- **Cursor only** — VS Code support planned as a separate extension
-- **No entropy checks** — relies on pattern matching; may miss high-entropy random strings
-- **Hooks are a Cursor preview feature** — the API may change
 
 ## Contributing
 

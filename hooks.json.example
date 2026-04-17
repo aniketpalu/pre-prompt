@@ -6,18 +6,6 @@
         "command": "python3 .cursor/hooks/scan-secrets.py",
         "failClosed": true
       }
-    ],
-    "beforeReadFile": [
-      {
-        "command": "python3 .cursor/hooks/scan-file-read.py",
-        "failClosed": true
-      }
-    ],
-    "beforeTabFileRead": [
-      {
-        "command": "python3 .cursor/hooks/scan-file-read.py",
-        "failClosed": true
-      }
     ]
   }
 }
