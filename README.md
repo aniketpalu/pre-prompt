@@ -2,6 +2,8 @@
 
 A credential scanner that catches secrets **before they reach the AI model**. Built as a native [Cursor hook](https://cursor.com/docs/agent/hooks) — no extension required.
 
+![Demo](assets/demo.gif)
+
 > **Cursor only for now.** VS Code extension is planned.
 
 ## How It Works
