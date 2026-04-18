@@ -140,9 +140,9 @@ PATTERNS: list[dict[str, Any]] = [
     {
         "name": "Secret assignment",
         "regex": re.compile(
-            r"(?i)(password|passwd|token|secret|api_key|apikey|access_key)\s*[=:]\s*['\"]?[^\s'\"]{8,}",
+            r"""(?i)["\']?(?:\w+_)?(password|passwd|token|secret|api_key|apikey|access_key|client_secret)["\']?\s*[=:]\s*['\"]?[^\s'\"]{8,}""",
         ),
-        "description": "Generic secret-like assignment",
+        "description": "Generic secret-like assignment (includes prefixed variants like client_secret, db_password, and JSON format)",
     },
     {
         "name": "Container registry auth",
